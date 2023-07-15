@@ -221,11 +221,12 @@ if __name__ == "__main__":
 
     print( 'iTunes Library root directory: ' + walk_dir )
     print( 'XML Library file: ' + xml_file )
-    if cache_file == '':
+    if cache_file == '' or not os.path.exists(cache_file):
         calculate_all_checksums(walk_dir)
         read_itunes_library(xml_file)
         try:
-            cache_file = xml_file.replace('.xml', '.pkl').replace(' ', '_')
+            if not cache_file:
+                cache_file = xml_file.replace('.xml', '.pkl').replace(' ', '_')
             print( 'Saving cached data to ' + cache_file )
             with open(cache_file, 'wb') as fh:
                 pickle.dump(file_path_dict, fh)
