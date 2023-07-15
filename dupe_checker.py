@@ -123,48 +123,48 @@ def generate_reports(report_path):
         os.mkdir(report_path)
     create_dupes_map()
 
-    fh_not_in_itunes_db         = open(report_path + 'not_in_itunes.csv', 'w')
-    fh_missing_file             = open(report_path + 'not_in_itunes.csv', 'w')
-    fh_file_in_itunes_db        = open(report_path + 'file_in_itunes.csv', 'w')
-    fh_dupe_file_orig_in_itunes = open(report_path + 'dupe_file_orig_in_itunes.csv', 'w')
+    with open(report_path + 'not_in_itunes.csv', 'w') as fh_not_in_itunes_db, \
+            open(report_path + 'not_in_itunes.csv', 'w') as fh_missing_file, \
+            open(report_path + 'file_in_itunes.csv', 'w') as fh_file_in_itunes_db, \
+            open(report_path + 'dupe_file_orig_in_itunes.csv', 'w') as fh_dupe_file_orig_in_itunes:
 
-    file_path_dict_lock.acquire()
-    temp = None
-    try:
-        for file_name, file_data in file_path_dict.items():
-            temp = file_data
-            if file_data.itunes_file_path is None:
-                fh_not_in_itunes_db.write('"' + file_data.file_name + '","' + file_data.file_path + '"\n')
-            elif file_data.file_path is None:
-                fh_missing_file.write('"' + path_leaf(file_data.itunes_file_path) + '","' + file_data.itunes_file_path + '"\n')
-            else:
-                fh_file_in_itunes_db.write('"' + file_data.file_name + '","' + file_data.file_path + '"\n')
-    except Exception as details:
-        print( 'Exception: ' + details.message )
-    finally:
-        file_path_dict_lock.release()
+        file_path_dict_lock.acquire()
+        temp = None
+        try:
+            for file_name, file_data in file_path_dict.items():
+                temp = file_data
+                if file_data.itunes_file_path is None:
+                    fh_not_in_itunes_db.write('"' + file_data.file_name + '","' + file_data.file_path + '"\n')
+                elif file_data.file_path is None:
+                    fh_missing_file.write('"' + path_leaf(file_data.itunes_file_path) + '","' + file_data.itunes_file_path + '"\n')
+                else:
+                    fh_file_in_itunes_db.write('"' + file_data.file_name + '","' + file_data.file_path + '"\n')
+        except Exception as details:
+            print( 'Exception: ' + details.message )
+        finally:
+            file_path_dict_lock.release()
 
 
-    # Search through duplicate files and create list of those that have a copy in iTunes
-    try:
-        for checksum, file_data_array in checksums_dict.items():
-            temp = file_data_array
-            # If there are multiple files with the same checksum
-            if file_data_array.len() > 1:
-                file_in_itunes = None
-                # Try to find the file in iTunes
-                for cur_file in file_data_array:
-                    if cur_file.itunes_file_path is not None:
-                        if file_in_itunes is not None:
-                            print( 'Duplicate files found in the iTunes library: ' + file_in_itunes.file_name + " and " + cur_file.itunes_file_path )
-                        file_in_itunes = cur_file
-                for cur_file in file_data_array:
-                    if file_in_itunes is None:
-                        print( cur_file.file_path + ' is a duplicate, but does not have a copy in iTunes DB' )
-                    elif file_in_itunes is not cur_file:
-                        fh_dupe_file_orig_in_itunes.write('"' + cur_file.file_name + '","' + cur_file.file_path + '"')
-    except:
-        print( 'Exception while looking for duplicate files: ' + details.message )
+        # Search through duplicate files and create list of those that have a copy in iTunes
+        try:
+            for checksum, file_data_array in checksums_dict.items():
+                temp = file_data_array
+                # If there are multiple files with the same checksum
+                if file_data_array.len() > 1:
+                    file_in_itunes = None
+                    # Try to find the file in iTunes
+                    for cur_file in file_data_array:
+                        if cur_file.itunes_file_path is not None:
+                            if file_in_itunes is not None:
+                                print( 'Duplicate files found in the iTunes library: ' + file_in_itunes.file_name + " and " + cur_file.itunes_file_path )
+                            file_in_itunes = cur_file
+                    for cur_file in file_data_array:
+                        if file_in_itunes is None:
+                            print( cur_file.file_path + ' is a duplicate, but does not have a copy in iTunes DB' )
+                        elif file_in_itunes is not cur_file:
+                            fh_dupe_file_orig_in_itunes.write('"' + cur_file.file_name + '","' + cur_file.file_path + '"')
+        except:
+            print( 'Exception while looking for duplicate files: ' + details.message )
 
 def create_dupes_map():
     file_path_dict_lock.acquire()
@@ -227,17 +227,15 @@ if __name__ == "__main__":
         try:
             cache_file = xml_file.replace('.xml', '.pkl').replace(' ', '_')
             print( 'Saving cached data to ' + cache_file )
-            fh = open(cache_file, 'wb')
-            pickle.dump(file_path_dict, fh)
-            fh.close()
+            with open(cache_file, 'wb') as fh:
+                pickle.dump(file_path_dict, fh)
         except Exception as detail:
             print( 'Exception: ' + str(detail) )
     else:
         try:
             print( 'Loading cached data from: ' + cache_file )
-            cache_fh = open(cache_file,'rb')
-            file_path_dict = pickle.load(cache_fh)
-            cache_fh.close()
+            with open(cache_file, 'rb') as cache_fh:
+                file_path_dict = pickle.load(cache_fh)
         except Exception as detail:
             print( 'Exception while loading cached data from ' + cache_file + ' ' + str(detail) )
             exit(-1)
