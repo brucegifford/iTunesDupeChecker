@@ -22,7 +22,7 @@ import ntpath
 from threading import Lock
 from multiprocessing.pool import ThreadPool as Pool
 import xml.etree.ElementTree as ET
-import urllib2
+import urllib.request
 
 checksums_dict = {}
 checksums_dict_lock = Lock()
@@ -55,7 +55,7 @@ def checksum_file(filename):
 
 
 def process_file(file_name):
-    print "<<<" + file_name + ">>>"
+    print( "<<<" + file_name + ">>>" )
     file_cksum = checksum_file(file_name)
     new_file = FileAttributes()
     new_file.file_path = file_name
@@ -69,7 +69,7 @@ def process_file(file_name):
 
 
 def calculate_all_checksums(walk_dir):
-    print '--\n--Calculating File Checksums (This will take a LOOOOONG time)\n--'
+    print( '--\n--Calculating File Checksums (This will take a LOOOOONG time)\n--')
     for root, subdirs, files in os.walk(walk_dir):
         for file in files:
             pool.apply_async(process_file, (os.path.join(root, file),))
@@ -97,24 +97,24 @@ def read_itunes_library(xml_file):
                             this_dict[sub_key] = attribute.text
                         # print 'data6\t\t\t\t', sub_key, attribute.tag, attribute.text, attribute.attrib
                     try:
-                        unquoted_path = urllib2.unquote(this_dict['Location']).replace('file://','')
-                        print this_dict['Name'], this_dict['Location'], unquoted_path
+                        unquoted_path = urllib.request.unquote(this_dict['Location']).replace('file://','')
+                        print( this_dict['Name'], this_dict['Location'], unquoted_path )
                         file_path_dict_lock.acquire()
                         try:
                             if unquoted_path not in file_path_dict:
-                                print 'WARNING: ' + unquoted_path + ' was in iTunes Library, but not in file system'
+                                print( 'WARNING: ' + unquoted_path + ' was in iTunes Library, but not in file system' )
                                 file_path_dict[unquoted_path] = FileAttributes()
                             file_path_dict[unquoted_path].itunes_file_path = unquoted_path
                             file_path_dict[unquoted_path].itunes_key = cur_key
                         except Exception as detail:
-                            print 'Exception: ' + detail.message
+                            print( 'Exception: ' + str(detail) )
                         finally:
                             file_path_dict_lock.release()
                     except Exception as detail:
-                        print 'Exception: ' + detail.message
+                        print( 'Exception: ' + str(detail) )
 
     except Exception as detail:
-        print 'Exception: ' + detail.message
+        print( 'Exception: ' + str(detail) )
         return
 
 def generate_reports(report_path):
@@ -139,7 +139,7 @@ def generate_reports(report_path):
             else:
                 fh_file_in_itunes_db.write('"' + file_data.file_name + '","' + file_data.file_path + '"\n')
     except Exception as details:
-        print 'Exception: ' + details.message
+        print( 'Exception: ' + details.message )
     finally:
         file_path_dict_lock.release()
 
@@ -155,15 +155,15 @@ def generate_reports(report_path):
                 for cur_file in file_data_array:
                     if cur_file.itunes_file_path is not None:
                         if file_in_itunes is not None:
-                            print 'Duplicate files found in the iTunes library: ' + file_in_itunes.file_name + " and " + cur_file.itunes_file_path
+                            print( 'Duplicate files found in the iTunes library: ' + file_in_itunes.file_name + " and " + cur_file.itunes_file_path )
                         file_in_itunes = cur_file
                 for cur_file in file_data_array:
                     if file_in_itunes is None:
-                        print cur_file.file_path + ' is a duplicate, but does not have a copy in iTunes DB'
+                        print( cur_file.file_path + ' is a duplicate, but does not have a copy in iTunes DB' )
                     elif file_in_itunes is not cur_file:
                         fh_dupe_file_orig_in_itunes.write('"' + cur_file.file_name + '","' + cur_file.file_path + '"')
     except:
-        print 'Exception while looking for duplicate files: ' + details.message
+        print( 'Exception while looking for duplicate files: ' + details.message )
 
 def create_dupes_map():
     file_path_dict_lock.acquire()
@@ -174,7 +174,7 @@ def create_dupes_map():
                     checksums_dict[file_data.checksum] = []
                 checksums_dict[file_data.checksum].append(file_data)
     except Exception as details:
-        print 'Exception: ' + details.message
+        print( 'Exception: ' + details.message )
     finally:
         file_path_dict_lock.release()
 
@@ -194,7 +194,7 @@ if __name__ == "__main__":
         xml_file = args.xml_file
         cache_file = args.cache_file
     except Exception as detail:
-        print 'Exception: ' + detail.message
+        print( 'Exception: ' + str(detail) )
         parser.print_help()
 
     if walk_dir is '':
@@ -204,27 +204,27 @@ if __name__ == "__main__":
     if xml_file is '':
         xml_file = '/Volumes/Raid/Library copy.xml'
 
-    print 'iTunes Library root directory: ' + walk_dir
-    print 'XML Library file: ' + xml_file
     if cache_file is '':
+    print( 'iTunes Library root directory: ' + walk_dir )
+    print( 'XML Library file: ' + xml_file )
         calculate_all_checksums(walk_dir)
         read_itunes_library(xml_file)
         try:
             cache_file = xml_file.replace('.xml', '.pkl').replace(' ', '_')
-            print 'Saving cached data to ' + cache_file
+            print( 'Saving cached data to ' + cache_file )
             fh = open(cache_file, 'wb')
             pickle.dump(file_path_dict, fh)
             fh.close()
         except Exception as detail:
-            print 'Exception: ' + detail.message
+            print( 'Exception: ' + str(detail) )
     else:
         try:
-            print 'Loading cached data from: ' + cache_file
+            print( 'Loading cached data from: ' + cache_file )
             cache_fh = open(cache_file,'rb')
             file_path_dict = pickle.load(cache_fh)
             cache_fh.close()
         except Exception as detail:
-            print 'Exception while loading cached data from ' + cache_file + ' ' + detail.message
+            print( 'Exception while loading cached data from ' + cache_file + ' ' + str(detail) )
             exit(-1)
 
     report_directory = './output_'+os.path.basename(xml_file).replace('.','_').replace(' ','_') + '/'
