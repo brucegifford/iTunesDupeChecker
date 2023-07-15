@@ -197,16 +197,16 @@ if __name__ == "__main__":
         print( 'Exception: ' + str(detail) )
         parser.print_help()
 
-    if walk_dir is '':
+    if walk_dir == '':
         #walk_dir = '/Volumes/Raid/iTunes'
         walk_dir = '/Volumes/Raid/iTunes/iTunes Music/Music/Wynonna Judd/Wynonna/'
 
-    if xml_file is '':
+    if xml_file == '':
         xml_file = '/Volumes/Raid/Library copy.xml'
 
-    if cache_file is '':
     print( 'iTunes Library root directory: ' + walk_dir )
     print( 'XML Library file: ' + xml_file )
+    if cache_file == '':
         calculate_all_checksums(walk_dir)
         read_itunes_library(xml_file)
         try:
