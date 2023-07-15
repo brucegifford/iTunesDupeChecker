@@ -23,6 +23,7 @@ from threading import Lock
 from multiprocessing.pool import ThreadPool as Pool
 import xml.etree.ElementTree as ET
 import urllib.request
+import platform
 
 checksums_dict = {}
 checksums_dict_lock = Lock()
@@ -204,11 +205,19 @@ if __name__ == "__main__":
         parser.print_help()
 
     if walk_dir == '':
-        #walk_dir = '/Volumes/Raid/iTunes'
-        walk_dir = '/Volumes/Raid/iTunes/iTunes Music/Music/Wynonna Judd/Wynonna/'
+        if platform.system() == 'Windows':
+            user_account_name = os.environ['USERNAME']
+            walk_dir = 'c:/Users/'+user_account_name+ '/Music/iTunes/iTunes Media/Music/'
+        else:
+            #walk_dir = '/Volumes/Raid/iTunes'
+            walk_dir = '/Volumes/Raid/iTunes/iTunes Music/Music/Wynonna Judd/Wynonna/'
 
     if xml_file == '':
-        xml_file = '/Volumes/Raid/Library copy.xml'
+        if platform.system() == 'Windows':
+            user_account_name = os.environ['USERNAME']
+            xml_file = 'c:/Users/'+user_account_name+ '/Music/iTunes/Library.xml'
+        else:
+            xml_file = '/Volumes/Raid/Library copy.xml'
 
     print( 'iTunes Library root directory: ' + walk_dir )
     print( 'XML Library file: ' + xml_file )
