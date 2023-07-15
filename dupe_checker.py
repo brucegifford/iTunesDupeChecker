@@ -189,7 +189,13 @@ if __name__ == "__main__":
                         help='Optional cache file to load the internal data of this tool (for debugging use, when you' +
                              'don\'t want to re-parse all of the data')
     try:
-        args = parser.parse_args()
+        # allow command line arguments to be commented out by starting with #
+        good_args = []
+        for arg in sys.argv[1:]:
+            if (not arg.startswith('#')) and (not arg.startswith('--#')) and (not arg.startswith('-#')):
+                good_args.append(arg)
+
+        args = parser.parse_args(good_args)
         walk_dir = args.itunes_dir
         xml_file = args.xml_file
         cache_file = args.cache_file
